@@ -1,25 +1,31 @@
 import requests
 import telebot
 import time
+import logging
 from dotenv import load_dotenv
 import os
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 load_dotenv()
-token_tel = os.environ.get("TOKEN_TELEGRAM")
-url = "https://dvmn.org/api/long_polling/"
-token_dev =os.environ.get("TOKEN_DEVMAN")
-header = {
-    "Authorization": f"Token {token_dev}"
+TELEGRAM_TOKEN = os.environ.get("TOKEN_TELEGRAM")
+URL_DEVMAN = "https://dvmn.org/api/long_polling/"
+DEVMAN_TOKEN = os.environ.get("TOKEN_DEVMAN")
+HEADER_AUTHENTICATION = {
+    "Authorization": f"Token {DEVMAN_TOKEN}"
 }
-params = {"timestamp": 1555493856}
-bot = telebot.TeleBot(token_tel)
-chat_id=os.environ.get("chat_id")
+TIMESTAMP = os.environ.get("TIMESTAMP")
+PARAMS = {"timestamp": TIMESTAMP}
+bot = telebot.TeleBot(TELEGRAM_TOKEN)
+CHAT_USER_ID = os.environ.get("CHAT_ID")
 
 @bot.message_handler(commands=["start"])
 def start(message):
     while True:
         try:
-            response = requests.get(url, params=params, headers=header, timeout=60)
+            response = requests.get(URL_DEVMAN, params=PARAMS, headers=HEADER_AUTHENTICATION, timeout=60)
+            response.raise_for_status()
             if response.ok:
                 data = response.json()
                 if data["status"] == "found":
@@ -28,13 +34,12 @@ def start(message):
                         lesson_title = attempt["lesson_title"]
                         lesson_url = attempt["lesson_url"]
                         message_text = f"New attempt detected!\nLesson Title: {lesson_title}\nLesson URL: {lesson_url}"
-                        bot.send_message(chat_id, message_text)
-                        print(response.text)
+                        bot.send_message(CHAT_USER_ID, message_text)
                 time.sleep(60)
-            response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            print(e)
+            logger.error(f"Request error: {e}")
         except requests.exceptions.Timeout as e:
-            print(e)
+            logger.error(f"Request timed out: {e}")
 
-bot.polling(none_stop=True)
+if __name__ == "__main__":
+    bot.polling(none_stop=True)
