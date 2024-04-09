@@ -58,7 +58,7 @@ pip install -r requirements.txt
 ```sh
 DEVMAN_TOKEN=персональный_токен
 TELEGRAM_TOKEN=токен_telegram_бота
-CHAT_USER_ID=ваш_персональный_chat_id
+TELEGRAM_USER_ID=ваш_персональный_chat_id
 
 ```
 
